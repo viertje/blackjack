@@ -20,6 +20,50 @@ export class BlackjackGame {
     currentPhase: GamePhase = GamePhase.Betting;
 
     /**
+     * Checks if a hand is a natural blackjack.
+     */
+    isNaturalBlackjack(hand: Card[]) {
+        return this.calculateHandValue(hand) === 21 && hand.length === 2;
+    }
+
+    /**
+     * Checks if a hand is bust (value over 21).
+     */
+    isBust(hand: Card[]) {
+        return this.calculateHandValue(hand) > 21;
+    }
+
+    /**
+     * Checks if the player wins.
+     */
+    playerWins(playerHand: Card[], dealerHand: Card[]) {
+        const playerValue = this.calculateHandValue(playerHand);
+        const dealerValue = this.calculateHandValue(dealerHand);
+        return (
+            playerValue <= 21 && (dealerValue > 21 || playerValue > dealerValue)
+        );
+    }
+
+    /**
+     * Checks if the dealer wins.
+     */
+    dealerWins(playerHand: Card[], dealerHand: Card[]) {
+        const playerValue = this.calculateHandValue(playerHand);
+        const dealerValue = this.calculateHandValue(dealerHand);
+        return dealerValue <= 21 && dealerValue > playerValue;
+    }
+
+    /**
+     * Checks if the game is a push (tie).
+     */
+    isPush(playerHand: Card[], dealerHand: Card[]) {
+        return (
+            this.calculateHandValue(playerHand) ===
+            this.calculateHandValue(dealerHand)
+        );
+    }
+
+    /**
      * Starts a new round using the given bet.
      * Deducts the bet from the balance and deals initial cards.
      */
@@ -45,10 +89,7 @@ export class BlackjackGame {
         this.dealerHand = initialDraw.cards.slice(2, 4);
 
         // Check for natural blackjack.
-        if (
-            this.calculateHandValue(this.playerHand) === 21 &&
-            this.playerHand.length === 2
-        ) {
+        if (this.isNaturalBlackjack(this.playerHand)) {
             this.currentPhase = GamePhase.Outcome;
         } else {
             this.currentPhase = GamePhase.PlayerTurn;
@@ -173,24 +214,21 @@ export class BlackjackGame {
     checkGameOutcome() {
         if (this.hasSurrendered) return GameOutcome.PlayerSurrender;
 
-        const playerValue = this.calculateHandValue(this.playerHand);
-        const dealerValue = this.calculateHandValue(this.dealerHand);
-
-        // Natural blackjack
-        if (playerValue === 21 && this.playerHand.length === 2) {
+        if (this.isNaturalBlackjack(this.playerHand)) {
             this.playerBalance += Math.floor(this.playerBet * 2.5);
             return GameOutcome.Blackjack;
         }
-        if (playerValue > 21) return GameOutcome.PlayerBust;
-        if (dealerValue > 21) {
+        if (this.isBust(this.playerHand)) return GameOutcome.PlayerBust;
+        if (this.isBust(this.dealerHand)) {
             this.playerBalance += this.playerBet * 2;
             return GameOutcome.DealerBust;
         }
-        if (playerValue > dealerValue) {
+        if (this.playerWins(this.playerHand, this.dealerHand)) {
             this.playerBalance += this.playerBet * 2;
             return GameOutcome.PlayerWins;
         }
-        if (dealerValue > playerValue) return GameOutcome.DealerWins;
+        if (this.dealerWins(this.playerHand, this.dealerHand))
+            return GameOutcome.DealerWins;
 
         this.playerBalance += this.playerBet; // Push
         return GameOutcome.Push;
