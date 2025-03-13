@@ -1,2 +1,7 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
+
+body {
+  @apply font-sans;
+  background: rgb(1, 90, 41);
+}
