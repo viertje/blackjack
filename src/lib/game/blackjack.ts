@@ -2,26 +2,20 @@ import { Deck, type Card } from "../api/deckAPI";
 import { GameOutcome } from "./enums";
 
 export class BlackjackGame {
-    // Deck and hands
     deck!: Deck;
     playerHand: Card[] = [];
     dealerHand: Card[] = [];
-    // Money management
     playerBet = 0;
     playerBalance = 1000;
-    // Reshuffle threshold for 6 decks (312 cards)
-    reshuffleThreshold = 312 * 0.4; // ~125 cards
-    // Option flags
+    gameOver = false;
+    reshuffleThreshold = 312 * 0.4;
+
     hasDoubledDown = false;
     hasSurrendered = false;
     // For splitting (basic implementation)
     splitHands: Card[][] = [];
     activeSplitHandIndex = 0;
 
-    /**
-     * Starts a new round using the given bet.
-     * Deducts the bet from the balance and deals initial cards.
-     */
     async startGame(bet: number) {
         if (bet % 10 !== 0) throw new Error("Bet must be divisible by 10");
         if (bet > this.playerBalance) throw new Error("Insufficient balance");
@@ -33,7 +27,6 @@ export class BlackjackGame {
         this.splitHands = [];
         this.activeSplitHandIndex = 0;
 
-        // Initialize deck if needed (or if remaining cards are low)
         if (!this.deck || this.deck.remaining < this.reshuffleThreshold) {
             this.deck = await Deck.initialize(6);
         }
@@ -43,16 +36,12 @@ export class BlackjackGame {
         this.dealerHand = initialDraw.cards.slice(2, 4);
     }
 
-    // Reshuffle if cards remaining fall below threshold.
     private async maybeReshuffle() {
         if (this.deck.remaining < this.reshuffleThreshold) {
             await this.deck.reshuffle(true);
         }
     }
 
-    /**
-     * Draws one card and adds it to the specified hand.
-     */
     async hit(hand: Card[] = this.playerHand) {
         await this.maybeReshuffle();
         const drawResult = await this.deck.draw(1);
@@ -61,17 +50,10 @@ export class BlackjackGame {
         }
     }
 
-    /**
-     * Convenience method for adding a card to the dealer's hand.
-     */
     async hitDealer() {
         await this.hit(this.dealerHand);
     }
 
-    /**
-     * Double down on an initial two-card hand.
-     * Deducts an additional bet, doubles the wager, and deals one final card.
-     */
     async doubleDown() {
         if (
             this.playerHand.length === 2 &&
@@ -85,9 +67,6 @@ export class BlackjackGame {
         }
     }
 
-    /**
-     * Surrender the hand, returning half the bet.
-     */
     async surrender() {
         if (this.playerHand.length === 2 && !this.hasSurrendered) {
             this.hasSurrendered = true;
@@ -120,9 +99,6 @@ export class BlackjackGame {
         }
     }
 
-    /**
-     * Calculates the total value of a hand.
-     */
     calculateHandValue(hand: Card[]) {
         let total = 0;
         let aces = 0;
@@ -143,20 +119,14 @@ export class BlackjackGame {
         return total;
     }
 
-    /**
-     * Checks the game outcome and adjusts the balance accordingly.
-     */
     checkGameOutcome() {
-        if (this.hasSurrendered) {
-            return GameOutcome.PlayerSurrender;
-        }
+        if (this.hasSurrendered) return GameOutcome.PlayerSurrender;
 
         const playerValue = this.calculateHandValue(this.playerHand);
         const dealerValue = this.calculateHandValue(this.dealerHand);
 
-        // Natural blackjack check (2-card 21)
         if (playerValue === 21 && this.playerHand.length === 2) {
-            this.playerBalance += Math.floor(this.playerBet * 2.5); // pays 3:2
+            this.playerBalance += Math.floor(this.playerBet * 2.5);
             return GameOutcome.Blackjack;
         }
         if (playerValue > 21) return GameOutcome.PlayerBust;
@@ -169,8 +139,18 @@ export class BlackjackGame {
             return GameOutcome.PlayerWins;
         }
         if (dealerValue > playerValue) return GameOutcome.DealerWins;
-        // Push: bet is returned.
+
         this.playerBalance += this.playerBet;
         return GameOutcome.Push;
+    }
+
+    checkGameOver() {
+        this.gameOver = this.playerBalance <= 0;
+        return this.gameOver;
+    }
+
+    restartGame() {
+        this.playerBalance = 1000;
+        this.gameOver = false;
     }
 }

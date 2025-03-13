@@ -1,27 +1,24 @@
 <script lang="ts">
-    // Import game logic and types.
     import { BlackjackGame } from "$lib/game/blackjack";
     import type { Card } from "$lib/api/deckAPI";
 
-    // (Assuming your reactive helpers $state and $derived exist in your setup.)
     let game = new BlackjackGame();
 
-    // UI state variables.
     let gameStarted = $state(false);
     let playerTurnActive = $state(false);
-    let revealDealerHole = $state(false); // Controls whether the dealer's hole card is shown.
+    let revealDealerHole = $state(false);
     let gameOutcome = $state<string | null>(null);
 
     let playerHand = $state<Card[]>([]);
     let dealerHand = $state<Card[]>([]);
     let playerBalance = $state(game.playerBalance);
     let playerBet = $state(100);
+    let isGameOver = $state(false);
 
     // Derived values for hand totals.
     let playerHandValue = $derived(game.calculateHandValue(playerHand));
     let dealerHandValue = $derived(game.calculateHandValue(dealerHand));
 
-    // --- Betting Phase ---
     async function placeBet() {
         try {
             await game.startGame(playerBet);
@@ -36,38 +33,35 @@
         gameStarted = true;
         playerTurnActive = true;
         revealDealerHole = false;
-        // Immediately check for natural blackjack.
         if (
             game.calculateHandValue(playerHand) === 21 &&
             playerHand.length === 2
         ) {
-            // Automatically resolve blackjack.
             gameOutcome = game.checkGameOutcome();
             playerTurnActive = false;
             revealDealerHole = true;
         }
     }
 
-    // --- Player Turn ---
     async function hit() {
         await game.hit();
         playerHand = game.playerHand;
         if (game.calculateHandValue(playerHand) > 21) {
-            // Player busts.
             playerTurnActive = false;
             revealDealerHole = true;
             gameOutcome = game.checkGameOutcome();
+            isGameOver = game.checkGameOver();
         }
     }
 
     async function stand() {
         playerTurnActive = false;
         revealDealerHole = true;
-        // Dealer's turn starts automatically.
         await game.dealerPlay();
         dealerHand = game.dealerHand;
         gameOutcome = game.checkGameOutcome();
         playerBalance = game.playerBalance;
+        isGameOver = game.checkGameOver();
     }
 
     async function doubleDown() {
@@ -107,14 +101,26 @@
         revealDealerHole = false;
         gameOutcome = null;
     }
+
+    function restartGame() {
+        game.restartGame();
+        playerBalance = game.playerBalance;
+        isGameOver = false;
+        gameStarted = false;
+    }
 </script>
 
 <main>
     <h1>Blackjack Game</h1>
+
     <p>Balance: ${playerBalance}</p>
 
-    <!-- Betting Phase -->
-    {#if !gameStarted}
+    {#if isGameOver}
+        <h2>Game Over! You are out of money.</h2>
+        <button onclick={restartGame}>Restart Game</button>
+    {/if}
+
+    {#if !gameStarted && !isGameOver}
         <label>
             Bet (divisible by 10):
             <input
@@ -130,7 +136,6 @@
         >
     {/if}
 
-    <!-- Game in Progress -->
     {#if gameStarted}
         <section>
             <h2>Player's Hand ({playerHandValue})</h2>
@@ -187,7 +192,7 @@
     {/if}
 
     <!-- Outcome and Next Round -->
-    {#if gameOutcome}
+    {#if gameOutcome && !isGameOver}
         <section>
             <h2>Game Outcome: {gameOutcome}</h2>
             <button onclick={newRound}>New Round</button>
