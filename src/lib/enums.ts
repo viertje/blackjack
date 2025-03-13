@@ -20,3 +20,25 @@ export enum GameOutcome {
     Blackjack = "blackjack",
     PlayerSurrender = "player surrender",
 }
+
+/**
+ * Enum representing the different phases of a Blackjack round.
+ */
+export enum GamePhase {
+    Betting = "betting",
+    InitialDeal = "initial deal",
+    PlayerTurn = "player turn",
+    DealerTurn = "dealer turn",
+    Outcome = "outcome",
+}
+
+/**
+ * Enum representing the possible actions a player can take.
+ */
+export enum PlayerAction {
+    Hit = "hit",
+    Stand = "stand",
+    DoubleDown = "double down",
+    Split = "split",
+    Surrender = "surrender",
+}

@@ -1,5 +1,5 @@
 import { Deck, type Card } from "../api/deckAPI";
-import { GameOutcome } from "./enums";
+import { GameOutcome, GamePhase } from "../enums";
 
 export class BlackjackGame {
     deck!: Deck;
@@ -8,7 +8,7 @@ export class BlackjackGame {
     playerBet = 0;
     playerBalance = 1000;
     gameOver = false;
-    reshuffleThreshold = 312 * 0.4;
+    reshuffleThreshold = 312 * 0.4; // About 125 cards remaining
 
     hasDoubledDown = false;
     hasSurrendered = false;
@@ -16,6 +16,13 @@ export class BlackjackGame {
     splitHands: Card[][] = [];
     activeSplitHandIndex = 0;
 
+    // Track the current phase using our enum
+    currentPhase: GamePhase = GamePhase.Betting;
+
+    /**
+     * Starts a new round using the given bet.
+     * Deducts the bet from the balance and deals initial cards.
+     */
     async startGame(bet: number) {
         if (bet % 10 !== 0) throw new Error("Bet must be divisible by 10");
         if (bet > this.playerBalance) throw new Error("Insufficient balance");
@@ -26,7 +33,9 @@ export class BlackjackGame {
         this.hasSurrendered = false;
         this.splitHands = [];
         this.activeSplitHandIndex = 0;
+        this.currentPhase = GamePhase.InitialDeal;
 
+        // Initialize deck if needed.
         if (!this.deck || this.deck.remaining < this.reshuffleThreshold) {
             this.deck = await Deck.initialize(6);
         }
@@ -34,6 +43,16 @@ export class BlackjackGame {
         const initialDraw = await this.deck.draw(4);
         this.playerHand = initialDraw.cards.slice(0, 2);
         this.dealerHand = initialDraw.cards.slice(2, 4);
+
+        // Check for natural blackjack.
+        if (
+            this.calculateHandValue(this.playerHand) === 21 &&
+            this.playerHand.length === 2
+        ) {
+            this.currentPhase = GamePhase.Outcome;
+        } else {
+            this.currentPhase = GamePhase.PlayerTurn;
+        }
     }
 
     private async maybeReshuffle() {
@@ -42,6 +61,9 @@ export class BlackjackGame {
         }
     }
 
+    /**
+     * Draws one card and adds it to the specified hand.
+     */
     async hit(hand: Card[] = this.playerHand) {
         await this.maybeReshuffle();
         const drawResult = await this.deck.draw(1);
@@ -50,10 +72,17 @@ export class BlackjackGame {
         }
     }
 
+    /**
+     * Convenience method for adding a card to the dealer's hand.
+     */
     async hitDealer() {
         await this.hit(this.dealerHand);
     }
 
+    /**
+     * Doubles down on an initial two-card hand.
+     * Deducts an additional bet, doubles the wager, and deals one final card.
+     */
     async doubleDown() {
         if (
             this.playerHand.length === 2 &&
@@ -64,18 +93,23 @@ export class BlackjackGame {
             this.playerBet *= 2;
             this.hasDoubledDown = true;
             await this.hit();
-        }
-    }
-
-    async surrender() {
-        if (this.playerHand.length === 2 && !this.hasSurrendered) {
-            this.hasSurrendered = true;
-            this.playerBalance += Math.floor(this.playerBet / 2);
+            this.currentPhase = GamePhase.DealerTurn;
         }
     }
 
     /**
-     * Splits the hand if the initial two cards are identical.
+     * Surrenders the hand, returning half the bet.
+     */
+    async surrender() {
+        if (this.playerHand.length === 2 && !this.hasSurrendered) {
+            this.hasSurrendered = true;
+            this.playerBalance += Math.floor(this.playerBet / 2);
+            this.currentPhase = GamePhase.Outcome;
+        }
+    }
+
+    /**
+     * Splits the hand if the first two cards are identical.
      * (Basic implementation: creates two hands and deals one card to each.)
      */
     async split() {
@@ -86,19 +120,26 @@ export class BlackjackGame {
             this.splitHands = [[this.playerHand[0]], [this.playerHand[1]]];
             await this.hit(this.splitHands[0]);
             await this.hit(this.splitHands[1]);
+            // For simplicity, after splitting we'll use the first hand.
+            this.playerHand = this.splitHands[0];
         }
     }
 
     /**
-     * Dealer plays automatically: reveals hole card and draws until total >= 17.
+     * Dealer plays: reveals the hole card and draws until total >= 17.
      * Dealer stands on all 17s, including soft 17.
      */
     async dealerPlay() {
+        this.currentPhase = GamePhase.DealerTurn;
         while (this.calculateHandValue(this.dealerHand) < 17) {
             await this.hitDealer();
         }
+        this.currentPhase = GamePhase.Outcome;
     }
 
+    /**
+     * Calculates the total value of a hand.
+     */
     calculateHandValue(hand: Card[]) {
         let total = 0;
         let aces = 0;
@@ -119,12 +160,23 @@ export class BlackjackGame {
         return total;
     }
 
+    hasSoft17(hand: Card[]) {
+        return (
+            this.calculateHandValue(hand) === 17 &&
+            hand.some((card) => card.value === "ACE")
+        );
+    }
+
+    /**
+     * Determines the outcome and updates the balance accordingly.
+     */
     checkGameOutcome() {
         if (this.hasSurrendered) return GameOutcome.PlayerSurrender;
 
         const playerValue = this.calculateHandValue(this.playerHand);
         const dealerValue = this.calculateHandValue(this.dealerHand);
 
+        // Natural blackjack
         if (playerValue === 21 && this.playerHand.length === 2) {
             this.playerBalance += Math.floor(this.playerBet * 2.5);
             return GameOutcome.Blackjack;
@@ -140,7 +192,7 @@ export class BlackjackGame {
         }
         if (dealerValue > playerValue) return GameOutcome.DealerWins;
 
-        this.playerBalance += this.playerBet;
+        this.playerBalance += this.playerBet; // Push
         return GameOutcome.Push;
     }
 
@@ -152,5 +204,6 @@ export class BlackjackGame {
     restartGame() {
         this.playerBalance = 1000;
         this.gameOver = false;
+        this.currentPhase = GamePhase.Betting;
     }
 }
