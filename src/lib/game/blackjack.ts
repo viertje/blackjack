@@ -1,5 +1,5 @@
 import { Deck, type Card } from "../api/deckAPI";
-import { GameOutcome, GamePhase } from "../enums";
+import { GameOutcome, GamePhase, WinState } from "../enums";
 
 export class BlackjackGame {
     deck!: Deck;
@@ -34,33 +34,18 @@ export class BlackjackGame {
     }
 
     /**
-     * Checks if the player wins.
+     * Determines the winner between the player and the dealer.
+     * Returns WinState.Player if the player wins, WinState.Dealer if the dealer wins, and WinState.Push if it's a tie.
      */
-    playerWins(playerHand: Card[], dealerHand: Card[]) {
+    determineWinner(playerHand: Card[], dealerHand: Card[]): WinState {
         const playerValue = this.calculateHandValue(playerHand);
         const dealerValue = this.calculateHandValue(dealerHand);
-        return (
-            playerValue <= 21 && (dealerValue > 21 || playerValue > dealerValue)
-        );
-    }
 
-    /**
-     * Checks if the dealer wins.
-     */
-    dealerWins(playerHand: Card[], dealerHand: Card[]) {
-        const playerValue = this.calculateHandValue(playerHand);
-        const dealerValue = this.calculateHandValue(dealerHand);
-        return dealerValue <= 21 && dealerValue > playerValue;
-    }
-
-    /**
-     * Checks if the game is a push (tie).
-     */
-    isPush(playerHand: Card[], dealerHand: Card[]) {
-        return (
-            this.calculateHandValue(playerHand) ===
-            this.calculateHandValue(dealerHand)
-        );
+        if (playerValue > 21) return WinState.Dealer;
+        if (dealerValue > 21) return WinState.Player;
+        if (playerValue > dealerValue) return WinState.Player;
+        if (dealerValue > playerValue) return WinState.Dealer;
+        return WinState.Push;
     }
 
     /**
@@ -212,26 +197,39 @@ export class BlackjackGame {
      * Determines the outcome and updates the balance accordingly.
      */
     checkGameOutcome() {
-        if (this.hasSurrendered) return GameOutcome.PlayerSurrender;
+        let outcome: GameOutcome;
 
-        if (this.isNaturalBlackjack(this.playerHand)) {
-            this.playerBalance += Math.floor(this.playerBet * 2.5);
-            return GameOutcome.Blackjack;
+        switch (true) {
+            case this.hasSurrendered:
+                outcome = GameOutcome.PlayerSurrender;
+                break;
+            case this.isNaturalBlackjack(this.playerHand):
+                this.playerBalance += Math.floor(this.playerBet * 2.5);
+                outcome = GameOutcome.Blackjack;
+                break;
+            case this.isBust(this.playerHand):
+                outcome = GameOutcome.PlayerBust;
+                break;
+            case this.isBust(this.dealerHand):
+                this.playerBalance += this.playerBet * 2;
+                outcome = GameOutcome.DealerBust;
+                break;
+            case this.determineWinner(this.playerHand, this.dealerHand) ===
+                WinState.Player:
+                this.playerBalance += this.playerBet * 2;
+                outcome = GameOutcome.PlayerWins;
+                break;
+            case this.determineWinner(this.playerHand, this.dealerHand) ===
+                WinState.Dealer:
+                outcome = GameOutcome.DealerWins;
+                break;
+            default:
+                this.playerBalance += this.playerBet; // Push
+                outcome = GameOutcome.Push;
+                break;
         }
-        if (this.isBust(this.playerHand)) return GameOutcome.PlayerBust;
-        if (this.isBust(this.dealerHand)) {
-            this.playerBalance += this.playerBet * 2;
-            return GameOutcome.DealerBust;
-        }
-        if (this.playerWins(this.playerHand, this.dealerHand)) {
-            this.playerBalance += this.playerBet * 2;
-            return GameOutcome.PlayerWins;
-        }
-        if (this.dealerWins(this.playerHand, this.dealerHand))
-            return GameOutcome.DealerWins;
 
-        this.playerBalance += this.playerBet; // Push
-        return GameOutcome.Push;
+        return outcome;
     }
 
     checkGameOver() {

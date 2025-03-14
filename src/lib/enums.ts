@@ -42,3 +42,12 @@ export enum PlayerAction {
     Split = "split",
     Surrender = "surrender",
 }
+
+/**
+ * Enum representing the win state of a Blackjack round.
+ */
+export enum WinState {
+    Player = "player",
+    Dealer = "dealer",
+    Push = "push",
+}
