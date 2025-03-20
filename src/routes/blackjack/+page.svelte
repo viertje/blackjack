@@ -97,9 +97,20 @@
     }
 </script>
 
-<main>
-    <h1>Blackjack Game</h1>
-    <p>Balance: ${playerBalance}</p>
+<main class="bg-[#127a2c] text-white rounded-md p-4">
+    
+    <div class="grid grid-cols-3 gap-4 mb-4">
+        <div>
+            <img src="/symbols.png" alt="">
+        </div>
+        <h1 class="text-5xl place-content-center text-center bg-[#0a601f] rounded-md shadow-2xl p-4">Blackjack Game</h1>
+        <div class="text-center flex justify-end gap-8 items-center">
+            <p class="m-4 text-center bg-[#0a601f] rounded-md shadow-2xl p-4">${playerBalance}</p>
+            <p class="m-4 text-center bg-[#0a601f] rounded-md shadow-2xl p-4">{currentPhase}</p>
+        </div>
+    </div>
+    
+    <div class="bg-[#06561a] w-full rounded-md h-[50vh] p-4 shadow-2xl flex-col justify-start items-center">
 
     {#if isGameOver}
         <h2>Game Over! You are out of money.</h2>
@@ -107,25 +118,37 @@
     {/if}
 
     {#if currentPhase === GamePhase.Betting && !isGameOver}
-        <label>
-            Bet (divisible by 10):
-            <input
-                type="number"
-                bind:value={playerBet}
-                min="10"
-                step="10"
-                max={playerBalance}
-            />
-        </label>
-        <button onclick={placeBet} disabled={playerBet > playerBalance}
-            >Place Bet</button
-        >
+        <div class="flex justify-center items-center gap-4 w-full h-full">
+            <label class="bg-amber-700 p-2 rounded-md">
+                Bet:
+                <input
+                    type="number"
+                    bind:value={playerBet}
+                    min="10"
+                    step="10"
+                    max={playerBalance}
+                />
+            </label>
+            <button class="rounded-full bg-blue-950 p-4" onclick={placeBet} disabled={playerBet > playerBalance}
+                >Place Bet</button
+            >
+        </div>
+   
     {/if}
 
     {#if currentPhase !== GamePhase.Betting}
+    <div class="flex justify-center items-center gap-4 w-full h-full">
+
         <section>
-            <h2>Player's Hand ({playerHandValue})</h2>
-            <div class="card-row">
+            <div class="flex gap-4 justify-center items-center">
+            <h2 class="text-2xl border-white border-2 p-4 rounded-md m-4">Player's Hand ({playerHandValue})</h2>
+            <h2 class="text-2xl border-white border-2 p-4 rounded-md m-4">
+                Dealer's Hand ({currentPhase === GamePhase.Outcome
+                    ? dealerHandValue
+                    : "?"})
+            </h2>
+        </div>
+            <div class="flex gap-2">
                 {#each playerHand as card}
                     <img
                         src={card.image}
@@ -135,6 +158,9 @@
                 {/each}
             </div>
             {#if currentPhase === GamePhase.PlayerTurn}
+            <div class="flex gap-4 justify-center items-center">
+                
+            
                 <button onclick={() => performAction(PlayerAction.Hit)}
                     >Hit</button
                 >
@@ -143,30 +169,31 @@
                 >
                 {#if playerHand.length === 2 && playerBalance >= playerBet}
                     <button
+                        class="rounded-full bg-blue-950 p-4"
                         onclick={() => performAction(PlayerAction.DoubleDown)}
                         >Double Down</button
                     >
                     <button
+                        class="rounded-full bg-blue-950 p-4"
                         onclick={() => performAction(PlayerAction.Surrender)}
                         >Surrender</button
                     >
                     {#if playerHand[0].value === playerHand[1].value}
                         <button
+                            class="rounded-full bg-blue-950 p-4"
                             onclick={() => performAction(PlayerAction.Split)}
                             >Split</button
                         >
                     {/if}
                 {/if}
+            </div>
+
             {/if}
         </section>
 
         <section>
-            <h2>
-                Dealer's Hand ({currentPhase === GamePhase.Outcome
-                    ? dealerHandValue
-                    : "?"})
-            </h2>
-            <div class="card-row">
+      
+            <div class="flex gap-2">
                 {#if currentPhase === GamePhase.Outcome}
                     {#each dealerHand as card}
                         <img
@@ -192,6 +219,7 @@
                 {/if}
             </div>
         </section>
+    </div>
     {/if}
 
     {#if currentPhase === GamePhase.Outcome && !isGameOver}
@@ -200,42 +228,6 @@
             <button onclick={newRound}>New Round</button>
         </section>
     {/if}
-</main>
+</div>
 
-<style>
-    main {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-    }
-    h1,
-    h2 {
-        color: #333;
-    }
-    button {
-        margin: 5px;
-        padding: 10px 20px;
-        font-size: 16px;
-        cursor: pointer;
-    }
-    label {
-        display: block;
-        margin: 10px 0;
-    }
-    input {
-        padding: 5px;
-        font-size: 16px;
-        width: 100px;
-    }
-    section {
-        margin-top: 20px;
-    }
-    .card-row {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
-    img {
-        border-radius: 5px;
-        border: 1px solid #ccc;
-    }
-</style>
+</main>
