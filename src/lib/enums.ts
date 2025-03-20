@@ -12,13 +12,14 @@ export enum CardValue {
  * Enum representing the possible outcomes of a Blackjack round.
  */
 export enum GameOutcome {
-    PlayerBust = "player bust",
-    DealerBust = "dealer bust",
-    PlayerWins = "player wins",
-    DealerWins = "dealer wins",
-    Push = "push",
-    Blackjack = "blackjack",
-    PlayerSurrender = "player surrender",
+    PlayerBust = "Player Bust",
+    DealerBust = "Dealer Bust",
+    PlayerWins = "Player Wins",
+    DealerWins = "Dealer Wins",
+    Push = "Push",
+    PlayerBlackjack = "Player Blackjack",
+    DealerBlackjack = "Dealer Blackjack",
+    PlayerSurrender = "Player Surrender",
 }
 
 /**

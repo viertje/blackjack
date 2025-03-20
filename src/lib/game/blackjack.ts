@@ -1,5 +1,5 @@
 import { Deck, type Card } from "../api/deckAPI";
-import { GameOutcome, GamePhase, WinState } from "../enums";
+import { GameOutcome, GamePhase, WinState, CardValue } from "../enums";
 
 export class BlackjackGame {
     deck!: Deck;
@@ -64,7 +64,6 @@ export class BlackjackGame {
         this.activeSplitHandIndex = 0;
         this.currentPhase = GamePhase.InitialDeal;
 
-        // Initialize deck if needed.
         if (!this.deck || this.deck.remaining < this.reshuffleThreshold) {
             this.deck = await Deck.initialize(6);
         }
@@ -73,12 +72,26 @@ export class BlackjackGame {
         this.playerHand = initialDraw.cards.slice(0, 2);
         this.dealerHand = initialDraw.cards.slice(2, 4);
 
-        // Check for natural blackjack.
-        if (this.isNaturalBlackjack(this.playerHand)) {
+        const playerHasBlackjack = this.isNaturalBlackjack(this.playerHand);
+        const dealerHasBlackjack = this.isNaturalBlackjack(this.dealerHand);
+
+        if (playerHasBlackjack || dealerHasBlackjack) {
             this.currentPhase = GamePhase.Outcome;
-        } else {
-            this.currentPhase = GamePhase.PlayerTurn;
+
+            if (playerHasBlackjack && dealerHasBlackjack) {
+                this.playerBalance += this.playerBet; // Push, return bet
+                return GameOutcome.Push;
+            }
+            if (playerHasBlackjack) {
+                this.playerBalance += Math.floor(this.playerBet * 2.5); // 3:2 Payout
+                return GameOutcome.PlayerBlackjack;
+            }
+            if (dealerHasBlackjack) {
+                return GameOutcome.DealerBlackjack;
+            }
         }
+
+        this.currentPhase = GamePhase.PlayerTurn;
     }
 
     private async maybeReshuffle() {
@@ -164,16 +177,19 @@ export class BlackjackGame {
     }
 
     /**
-     * Calculates the total value of a hand.
+     * Calculates the total value of a hand, treating each Ace as 11 unless that causes
+     * the hand to exceed 21—in which case, each Ace is reduced to 1 (11 - 10).
      */
     calculateHandValue(hand: Card[]) {
         let total = 0;
         let aces = 0;
         hand.forEach((card) => {
-            if (card.value === "ACE") {
+            if (card.value.toUpperCase() === "ACE") {
                 aces++;
-                total += 11;
-            } else if (["KING", "QUEEN", "JACK"].includes(card.value)) {
+                total += CardValue.ACE; // using enum value (11)
+            } else if (
+                ["KING", "QUEEN", "JACK"].includes(card.value.toUpperCase())
+            ) {
                 total += 10;
             } else {
                 total += parseInt(card.value);
@@ -189,7 +205,7 @@ export class BlackjackGame {
     hasSoft17(hand: Card[]) {
         return (
             this.calculateHandValue(hand) === 17 &&
-            hand.some((card) => card.value === "ACE")
+            hand.some((card) => card.value.toUpperCase() === "ACE")
         );
     }
 
@@ -197,39 +213,31 @@ export class BlackjackGame {
      * Determines the outcome and updates the balance accordingly.
      */
     checkGameOutcome() {
-        let outcome: GameOutcome;
-
         switch (true) {
             case this.hasSurrendered:
-                outcome = GameOutcome.PlayerSurrender;
-                break;
-            case this.isNaturalBlackjack(this.playerHand):
-                this.playerBalance += Math.floor(this.playerBet * 2.5);
-                outcome = GameOutcome.Blackjack;
-                break;
+                return GameOutcome.PlayerSurrender;
+
             case this.isBust(this.playerHand):
-                outcome = GameOutcome.PlayerBust;
-                break;
+                return GameOutcome.PlayerBust;
+
             case this.isBust(this.dealerHand):
                 this.playerBalance += this.playerBet * 2;
-                outcome = GameOutcome.DealerBust;
-                break;
-            case this.determineWinner(this.playerHand, this.dealerHand) ===
-                WinState.Player:
-                this.playerBalance += this.playerBet * 2;
-                outcome = GameOutcome.PlayerWins;
-                break;
-            case this.determineWinner(this.playerHand, this.dealerHand) ===
-                WinState.Dealer:
-                outcome = GameOutcome.DealerWins;
-                break;
-            default:
-                this.playerBalance += this.playerBet; // Push
-                outcome = GameOutcome.Push;
-                break;
-        }
+                return GameOutcome.DealerBust;
 
-        return outcome;
+            default:
+                switch (
+                    this.determineWinner(this.playerHand, this.dealerHand)
+                ) {
+                    case WinState.Player:
+                        this.playerBalance += this.playerBet * 2;
+                        return GameOutcome.PlayerWins;
+                    case WinState.Dealer:
+                        return GameOutcome.DealerWins;
+                    case WinState.Push:
+                        this.playerBalance += this.playerBet;
+                        return GameOutcome.Push;
+                }
+        }
     }
 
     checkGameOver() {
