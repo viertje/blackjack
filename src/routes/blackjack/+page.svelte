@@ -148,25 +148,6 @@
                     <button class="rounded-full bg-blue-950 p-4" onclick={() => performAction(PlayerAction.Stand)}
                         >Stand</button
                     >
-                    {#if playerHand.length === 2 && playerBalance >= playerBet}
-                        <button
-                            class="rounded-full bg-blue-950 p-4"
-                            onclick={() => performAction(PlayerAction.DoubleDown)}
-                            >Double Down</button
-                        >
-                        <button
-                            class="rounded-full bg-red-950 p-4"
-                            onclick={() => performAction(PlayerAction.Surrender)}
-                            >Surrender</button
-                        >
-                        {#if playerHand[0].value === playerHand[1].value}
-                            <button
-                                class="rounded-full bg-blue-950 p-4"
-                                onclick={() => performAction(PlayerAction.Split)}
-                                >Split</button
-                            >
-                        {/if}
-                    {/if}
                 </div>
             {/if}
         
