@@ -66,6 +66,14 @@ export class Deck {
     }
 
     /**
+     * Returns the drawn cards directly.
+     */
+    public async drawCards(count: number = 1): Promise<Card[]> {
+        const data = await this.draw(count);
+        return data.cards;
+    }
+
+    /**
      * Reshuffles the deck.
      */
     public async reshuffle(remainingOnly: boolean = true) {
