@@ -16,12 +16,6 @@ export class BlackjackGame {
     gameOver = false;
     reshuffleThreshold = 312 * 0.4; // About 125 cards remaining
 
-    hasDoubledDown = false;
-    hasSurrendered = false;
-    // For splitting (basic implementation)
-    splitHands: Card[][] = [];
-    activeSplitHandIndex = 0;
-
     // Track the current phase using our enum
     currentPhase: GamePhase = GamePhase.Betting;
 
@@ -67,10 +61,6 @@ export class BlackjackGame {
 
         this.playerBet = bet;
         this.playerBalance -= bet;
-        this.hasDoubledDown = false;
-        this.hasSurrendered = false;
-        this.splitHands = [];
-        this.activeSplitHandIndex = 0;
         this.currentPhase = GamePhase.InitialDeal;
 
         if (!this.deck || this.deck.remaining < this.reshuffleThreshold) {
@@ -133,52 +123,6 @@ export class BlackjackGame {
     }
 
     /**
-     * Doubles down on an initial two-card hand.
-     * Deducts an additional bet, doubles the wager, and deals one final card.
-     */
-    async doubleDown() {
-        if (
-            this.playerHand.length === 2 &&
-            !this.hasDoubledDown &&
-            this.playerBalance >= this.playerBet
-        ) {
-            this.playerBalance -= this.playerBet;
-            this.playerBet *= 2;
-            this.hasDoubledDown = true;
-            await this.hit();
-            this.currentPhase = GamePhase.DealerTurn;
-        }
-    }
-
-    /**
-     * Surrenders the hand, returning half the bet.
-     */
-    async surrender() {
-        if (this.playerHand.length === 2 && !this.hasSurrendered) {
-            this.hasSurrendered = true;
-            this.playerBalance += Math.floor(this.playerBet / 2);
-            this.currentPhase = GamePhase.Outcome;
-        }
-    }
-
-    /**
-     * Splits the hand if the first two cards are identical.
-     * (Basic implementation: creates two hands and deals one card to each.)
-     */
-    async split() {
-        if (
-            this.playerHand.length === 2 &&
-            this.playerHand[0].value === this.playerHand[1].value
-        ) {
-            this.splitHands = [[this.playerHand[0]], [this.playerHand[1]]];
-            await this.hit(this.splitHands[0]);
-            await this.hit(this.splitHands[1]);
-            // For simplicity, after splitting we'll use the first hand.
-            this.playerHand = this.splitHands[0];
-        }
-    }
-
-    /**
      * Dealer plays: reveals the hole card and draws until total >= 17.
      * Dealer stands on all 17s, including soft 17.
      */
@@ -230,10 +174,6 @@ export class BlackjackGame {
         let outcome;
 
         switch (true) {
-            case this.hasSurrendered:
-                outcome = GameOutcome.PlayerSurrender;
-                break;
-
             case this.isBust(this.playerHand):
                 outcome = GameOutcome.PlayerBust;
                 break;
@@ -339,25 +279,6 @@ export class BlackjackGame {
                 this.gameOutcome = this.checkGameOutcome();
                 this.checkGameOver();
                 break;
-
-            case PlayerAction.DoubleDown:
-                await this.doubleDown();
-                this.currentPhase = GamePhase.DealerTurn;
-                await this.dealerPlay();
-                this.currentPhase = GamePhase.Outcome;
-                this.gameOutcome = this.checkGameOutcome();
-                this.checkGameOver();
-                break;
-
-            case PlayerAction.Surrender:
-                await this.surrender();
-                this.gameOutcome = this.checkGameOutcome();
-                this.currentPhase = GamePhase.Outcome;
-                break;
-
-            case PlayerAction.Split:
-                await this.split();
-                break;
         }
     }
 
@@ -369,27 +290,5 @@ export class BlackjackGame {
         this.gameOutcome = null;
         this.playerHand = [];
         this.dealerHand = [];
-    }
-
-    /**
-     * Check if the player can perform a specific action
-     */
-    canPerformAction(action: PlayerAction): boolean {
-        switch (action) {
-            case PlayerAction.DoubleDown:
-                return (
-                    this.playerHand.length === 2 &&
-                    this.playerBalance >= this.playerBet
-                );
-            case PlayerAction.Surrender:
-                return this.playerHand.length === 2;
-            case PlayerAction.Split:
-                return (
-                    this.playerHand.length === 2 &&
-                    this.playerHand[0].value === this.playerHand[1].value
-                );
-            default:
-                return true;
-        }
     }
 }

@@ -98,23 +98,6 @@
                 <button onclick={() => performAction(PlayerAction.Stand)}
                     >Stand</button
                 >
-                {#if game.canPerformAction(PlayerAction.DoubleDown)}
-                    <button
-                        onclick={() => performAction(PlayerAction.DoubleDown)}
-                        >Double Down</button
-                    >
-                {/if}
-                {#if game.canPerformAction(PlayerAction.Surrender)}
-                    <button
-                        onclick={() => performAction(PlayerAction.Surrender)}
-                        >Surrender</button
-                    >
-                {/if}
-                {#if game.canPerformAction(PlayerAction.Split)}
-                    <button onclick={() => performAction(PlayerAction.Split)}
-                        >Split</button
-                    >
-                {/if}
             {/if}
         </section>
 
