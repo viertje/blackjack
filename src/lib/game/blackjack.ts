@@ -1,5 +1,11 @@
 import { Deck, type Card } from "../api/deckAPI";
-import { GameOutcome, GamePhase, WinState, CardValue } from "../enums";
+import {
+    GameOutcome,
+    GamePhase,
+    WinState,
+    CardValue,
+    PlayerAction,
+} from "../enums";
 
 export class BlackjackGame {
     deck!: Deck;
@@ -18,6 +24,9 @@ export class BlackjackGame {
 
     // Track the current phase using our enum
     currentPhase: GamePhase = GamePhase.Betting;
+
+    // Current game outcome
+    gameOutcome: string | null = null;
 
     /**
      * Checks if a hand is a natural blackjack.
@@ -80,18 +89,23 @@ export class BlackjackGame {
 
             if (playerHasBlackjack && dealerHasBlackjack) {
                 this.playerBalance += this.playerBet; // Push, return bet
+                this.gameOutcome = GameOutcome.Push;
                 return GameOutcome.Push;
             }
             if (playerHasBlackjack) {
                 this.playerBalance += Math.floor(this.playerBet * 2.5); // 3:2 Payout
+                this.gameOutcome = GameOutcome.PlayerBlackjack;
                 return GameOutcome.PlayerBlackjack;
             }
             if (dealerHasBlackjack) {
+                this.gameOutcome = GameOutcome.DealerBlackjack;
                 return GameOutcome.DealerBlackjack;
             }
         }
 
         this.currentPhase = GamePhase.PlayerTurn;
+        this.gameOutcome = null;
+        return null;
     }
 
     private async maybeReshuffle() {
@@ -213,16 +227,21 @@ export class BlackjackGame {
      * Determines the outcome and updates the balance accordingly.
      */
     checkGameOutcome() {
+        let outcome;
+
         switch (true) {
             case this.hasSurrendered:
-                return GameOutcome.PlayerSurrender;
+                outcome = GameOutcome.PlayerSurrender;
+                break;
 
             case this.isBust(this.playerHand):
-                return GameOutcome.PlayerBust;
+                outcome = GameOutcome.PlayerBust;
+                break;
 
             case this.isBust(this.dealerHand):
                 this.playerBalance += this.playerBet * 2;
-                return GameOutcome.DealerBust;
+                outcome = GameOutcome.DealerBust;
+                break;
 
             default:
                 switch (
@@ -230,14 +249,20 @@ export class BlackjackGame {
                 ) {
                     case WinState.Player:
                         this.playerBalance += this.playerBet * 2;
-                        return GameOutcome.PlayerWins;
+                        outcome = GameOutcome.PlayerWins;
+                        break;
                     case WinState.Dealer:
-                        return GameOutcome.DealerWins;
+                        outcome = GameOutcome.DealerWins;
+                        break;
                     case WinState.Push:
                         this.playerBalance += this.playerBet;
-                        return GameOutcome.Push;
+                        outcome = GameOutcome.Push;
+                        break;
                 }
         }
+
+        this.gameOutcome = outcome;
+        return outcome;
     }
 
     checkGameOver() {
@@ -249,5 +274,122 @@ export class BlackjackGame {
         this.playerBalance = 1000;
         this.gameOver = false;
         this.currentPhase = GamePhase.Betting;
+    }
+
+    /**
+     * Get the current player hand
+     */
+    getPlayerHand(): Card[] {
+        return this.playerHand;
+    }
+
+    /**
+     * Get the current dealer hand
+     */
+    getDealerHand(): Card[] {
+        return this.dealerHand;
+    }
+
+    /**
+     * Get the current player balance
+     */
+    getPlayerBalance(): number {
+        return this.playerBalance;
+    }
+
+    /**
+     * Get the current player bet
+     */
+    getPlayerBet(): number {
+        return this.playerBet;
+    }
+
+    /**
+     * Get the current game phase
+     */
+    getCurrentPhase(): GamePhase {
+        return this.currentPhase;
+    }
+
+    /**
+     * Get the current game outcome
+     */
+    getGameOutcome(): string | null {
+        return this.gameOutcome;
+    }
+
+    /**
+     * Handle player actions (hit, stand, double down, etc.)
+     */
+    async handleAction(action: PlayerAction) {
+        switch (action) {
+            case PlayerAction.Hit:
+                await this.hit();
+                if (this.isBust(this.playerHand)) {
+                    this.currentPhase = GamePhase.Outcome;
+                    this.gameOutcome = this.checkGameOutcome();
+                    this.checkGameOver();
+                }
+                break;
+
+            case PlayerAction.Stand:
+                this.currentPhase = GamePhase.DealerTurn;
+                await this.dealerPlay();
+                this.currentPhase = GamePhase.Outcome;
+                this.gameOutcome = this.checkGameOutcome();
+                this.checkGameOver();
+                break;
+
+            case PlayerAction.DoubleDown:
+                await this.doubleDown();
+                this.currentPhase = GamePhase.DealerTurn;
+                await this.dealerPlay();
+                this.currentPhase = GamePhase.Outcome;
+                this.gameOutcome = this.checkGameOutcome();
+                this.checkGameOver();
+                break;
+
+            case PlayerAction.Surrender:
+                await this.surrender();
+                this.gameOutcome = this.checkGameOutcome();
+                this.currentPhase = GamePhase.Outcome;
+                break;
+
+            case PlayerAction.Split:
+                await this.split();
+                break;
+        }
+    }
+
+    /**
+     * Start a new round, resetting the game state
+     */
+    newRound() {
+        this.currentPhase = GamePhase.Betting;
+        this.gameOutcome = null;
+        this.playerHand = [];
+        this.dealerHand = [];
+    }
+
+    /**
+     * Check if the player can perform a specific action
+     */
+    canPerformAction(action: PlayerAction): boolean {
+        switch (action) {
+            case PlayerAction.DoubleDown:
+                return (
+                    this.playerHand.length === 2 &&
+                    this.playerBalance >= this.playerBet
+                );
+            case PlayerAction.Surrender:
+                return this.playerHand.length === 2;
+            case PlayerAction.Split:
+                return (
+                    this.playerHand.length === 2 &&
+                    this.playerHand[0].value === this.playerHand[1].value
+                );
+            default:
+                return true;
+        }
     }
 }

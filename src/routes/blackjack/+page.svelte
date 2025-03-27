@@ -5,14 +5,14 @@
 
     let game = new BlackjackGame();
 
-    let currentPhase = $state(game.currentPhase);
-    let gameOutcome = $state<string | null>(null);
-
-    let playerHand = $state<Card[]>([]);
-    let dealerHand = $state<Card[]>([]);
-    let playerBalance = $state(game.playerBalance);
+    // Use reactive state with the game object as source
+    let currentPhase = $state(game.getCurrentPhase());
+    let gameOutcome = $state<string | null>(game.getGameOutcome());
+    let playerHand = $state<Card[]>(game.getPlayerHand());
+    let dealerHand = $state<Card[]>(game.getDealerHand());
+    let playerBalance = $state(game.getPlayerBalance());
     let playerBet = $state(100);
-    let isGameOver = $state(false);
+    let isGameOver = $state(game.gameOver);
 
     // Derived totals.
     let playerHandValue = $derived(game.calculateHandValue(playerHand));
@@ -21,79 +21,36 @@
     async function placeBet() {
         try {
             await game.startGame(playerBet);
+            // Update all reactive state after the game state changes
+            updateGameState();
         } catch (error) {
             console.error(error);
-            return;
-        }
-        playerHand = game.playerHand;
-        dealerHand = game.dealerHand;
-        playerBalance = game.playerBalance;
-        gameOutcome = null;
-        currentPhase = game.currentPhase;
-        if (currentPhase === GamePhase.Outcome) {
-            gameOutcome = game.checkGameOutcome();
         }
     }
 
     async function performAction(action: PlayerAction) {
-        switch (action) {
-            case PlayerAction.Hit:
-                await game.hit();
-                playerHand = game.playerHand;
-                if (game.calculateHandValue(playerHand) > 21) {
-                    currentPhase = GamePhase.Outcome;
-                    gameOutcome = game.checkGameOutcome();
-                    isGameOver = game.checkGameOver();
-                }
-                break;
-            case PlayerAction.Stand:
-                currentPhase = GamePhase.DealerTurn;
-                await game.dealerPlay();
-                dealerHand = game.dealerHand;
-                currentPhase = GamePhase.Outcome;
-                gameOutcome = game.checkGameOutcome();
-                playerBalance = game.playerBalance;
-                isGameOver = game.checkGameOver();
-                break;
-            case PlayerAction.DoubleDown:
-                await game.doubleDown();
-                playerHand = game.playerHand;
-                playerBalance = game.playerBalance;
-                currentPhase = GamePhase.DealerTurn;
-                await game.dealerPlay();
-                dealerHand = game.dealerHand;
-                currentPhase = GamePhase.Outcome;
-                gameOutcome = game.checkGameOutcome();
-                playerBalance = game.playerBalance;
-                break;
-            case PlayerAction.Surrender:
-                await game.surrender();
-                playerBalance = game.playerBalance;
-                gameOutcome = game.checkGameOutcome();
-                currentPhase = GamePhase.Outcome;
-                break;
-            case PlayerAction.Split:
-                await game.split();
-                // For this example, show only the first split hand.
-                if (game.splitHands.length > 0) {
-                    playerHand = game.splitHands[0];
-                }
-                break;
-        }
+        await game.handleAction(action);
+        updateGameState();
     }
 
     function newRound() {
-        currentPhase = GamePhase.Betting;
-        gameOutcome = null;
-        playerHand = [];
-        dealerHand = [];
+        game.newRound();
+        updateGameState();
     }
 
     function restartGame() {
         game.restartGame();
-        playerBalance = game.playerBalance;
-        isGameOver = false;
-        currentPhase = GamePhase.Betting;
+        updateGameState();
+    }
+
+    // Helper function to update all reactive state
+    function updateGameState() {
+        playerHand = game.getPlayerHand();
+        dealerHand = game.getDealerHand();
+        playerBalance = game.getPlayerBalance();
+        currentPhase = game.getCurrentPhase();
+        gameOutcome = game.getGameOutcome();
+        isGameOver = game.gameOver;
     }
 </script>
 
@@ -141,21 +98,22 @@
                 <button onclick={() => performAction(PlayerAction.Stand)}
                     >Stand</button
                 >
-                {#if playerHand.length === 2 && playerBalance >= playerBet}
+                {#if game.canPerformAction(PlayerAction.DoubleDown)}
                     <button
                         onclick={() => performAction(PlayerAction.DoubleDown)}
                         >Double Down</button
                     >
+                {/if}
+                {#if game.canPerformAction(PlayerAction.Surrender)}
                     <button
                         onclick={() => performAction(PlayerAction.Surrender)}
                         >Surrender</button
                     >
-                    {#if playerHand[0].value === playerHand[1].value}
-                        <button
-                            onclick={() => performAction(PlayerAction.Split)}
-                            >Split</button
-                        >
-                    {/if}
+                {/if}
+                {#if game.canPerformAction(PlayerAction.Split)}
+                    <button onclick={() => performAction(PlayerAction.Split)}
+                        >Split</button
+                    >
                 {/if}
             {/if}
         </section>
