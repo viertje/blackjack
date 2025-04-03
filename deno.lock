@@ -778,9 +778,11 @@
         "npm:@sveltejs/vite-plugin-svelte@5",
         "npm:@tailwindcss/typography@~0.5.15",
         "npm:@tailwindcss/vite@4",
+        "npm:@types/node@^22.14.0",
         "npm:svelte-check@4",
         "npm:svelte@5",
         "npm:tailwindcss@4",
+        "npm:tsx@^4.19.3",
         "npm:typescript@5",
         "npm:vite@6"
       ]
