@@ -1,7 +1,20 @@
 {
     "github.copilot.chat.commitMessageGeneration.instructions": [
         {
-           "text": "Use conventional commit message format. For example: feat: add new feature",
-        }
+            "text": "Use conventional commit message format. For example: feat: add new feature, refact: fix bug, chore: update dependencies, etc"
+        },
+        {
+            "text": "Do not end the subject line with a period"
+        },
+        {
+            "text": "Capitalize the subject line and each paragraph"
+        },
+        {
+            "text": "Use the imperative mood in the subject line"
+        },
+        {
+            "text": "Use the body to explain what and why vs. how"
+        },
     ]
 }
+        
