@@ -65,6 +65,17 @@ class FakeDeck implements Deck {
     }
 }
 
+/**
+ * Helper function to create a new BlackjackGame with an optional deck.
+ */
+function createTestGame(cards?: Card[]): BlackjackGame {
+    const game = new BlackjackGame();
+    if (cards) {
+        game.deck = new FakeDeck(cards);
+    }
+    return game;
+}
+
 /* ------------------------------
    Utility Function Tests
 ------------------------------ */
@@ -183,8 +194,7 @@ test("testStartGame", async () => {
         createCard("5", "Diamonds"), // Dealer card1
         createCard("8", "Spades"), // Dealer card2
     ];
-    const game = new BlackjackGame();
-    game.deck = new FakeDeck(cards);
+    const game = createTestGame(cards);
     const outcome = await game.startGame(100);
     // Check that initial hands are dealt.
     assert.equal(
@@ -222,8 +232,7 @@ test("testHit", async () => {
         createCard("8", "Spades"),
         createCard("2", "Clubs"), // extra card for hit
     ];
-    const game = new BlackjackGame();
-    game.deck = new FakeDeck(cards);
+    const game = createTestGame(cards);
     await game.startGame(100);
     const initialLength = game.getActiveHand().length;
     await game.hit();
@@ -242,8 +251,7 @@ test("testHitDealer", async () => {
         createCard("8", "Spades"),
         createCard("3", "Clubs"), // extra card for dealer hit
     ];
-    const game = new BlackjackGame();
-    game.deck = new FakeDeck(cards);
+    const game = createTestGame(cards);
     await game.startGame(100);
     const initialDealerLength = game.getDealerHand().length;
     await game.hitDealer();
@@ -263,8 +271,7 @@ test("testDealerPlay", async () => {
         createCard("8", "Spades"), // Dealer card2 (8; total = 13)
         createCard("4", "Clubs"), // Dealer hit card to reach 17
     ];
-    const game = new BlackjackGame();
-    game.deck = new FakeDeck(cards);
+    const game = createTestGame(cards);
     await game.startGame(100);
     await game.dealerPlay();
     assert(
@@ -441,8 +448,7 @@ test("testGetters", async () => {
         createCard("8", "Spades"),
         createCard("10", "Clubs"), // extra card
     ];
-    const game = new BlackjackGame();
-    game.deck = new FakeDeck(cards);
+    const game = createTestGame(cards);
     await game.startGame(100);
     assert.equal(
         game.getActiveHand().length,
@@ -528,8 +534,7 @@ test("testHandleAction", async () => {
             createCard("8", "Spades"),
             createCard("2", "Clubs"), // card for hit
         ];
-        const game = new BlackjackGame();
-        game.deck = new FakeDeck(cards);
+        const game = createTestGame(cards);
         await game.startGame(100);
         const initialLength = game.getActiveHand().length;
         await game.handleAction(PlayerAction.Hit);
@@ -548,8 +553,7 @@ test("testHandleAction", async () => {
             createCard("8", "Spades"), // Dealer 13
             createCard("4", "Clubs"), // Dealer hit to reach 17
         ];
-        const game = new BlackjackGame();
-        game.deck = new FakeDeck(cards);
+        const game = createTestGame(cards);
         await game.startGame(100);
         await game.handleAction(PlayerAction.Stand);
         assert.equal(
