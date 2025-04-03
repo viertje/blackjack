@@ -78,11 +78,6 @@
     
     <div class="bg-[#06561a] w-full rounded-md h-[50vh] p-4 shadow-2xl flex-col justify-start items-center gap-4">
 
-        {#if isGameOver}
-            <h2 in:fade={{delay:1000}}>Game Over! You are out of money.</h2>
-            <button in:fade={{delay:1000}} onclick={restartGame}>Restart Game</button>
-        {/if}
-
         {#if currentPhase === GamePhase.Betting && !isGameOver}
             <div in:fade={{delay:1000}} class="flex justify-center items-center gap-4 w-full h-full">
                 <label class="bg-amber-700 p-2 rounded-md">
@@ -183,6 +178,13 @@
             <div in:fade={{delay:2000}} class="flex gap-4 justify-center items-center">
                 <button class="bg-amber-700 p-2 rounded-md" onclick={newRound}>New Round</button>
             </div>
+        {/if}
+
+        {#if isGameOver}
+        <div class="flex gap-4 justify-center items-center">
+            <h2 in:fade={{delay:1000}}>Game Over! You are out of money.</h2>
+            <button class="bg-amber-700 p-2 rounded-md" in:fade={{delay:1000}} onclick={restartGame}>Restart Game</button>
+        </div>
         {/if}
     </div>
 
