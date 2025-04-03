@@ -2,7 +2,7 @@
     import { BlackjackGame } from "$lib/game/blackjack";
     import type { Card } from "$lib/api/deckAPI";
     import { GamePhase, PlayerAction } from "$lib/enums";
-    import { fade } from 'svelte/transition';
+    import { fade } from "svelte/transition";
 
     let game = new BlackjackGame();
 
@@ -20,9 +20,9 @@
     // Derived values
     let dealerHandValue = $derived(game.calculateHandValue(dealerHand));
     let canSplit = $derived(
-        currentPhase === GamePhase.PlayerTurn && 
-        game.canSplit() && 
-        playerHands.length === 1
+        currentPhase === GamePhase.PlayerTurn &&
+            game.canSplit() &&
+            playerHands.length === 1
     );
 
     async function placeBet() {
@@ -64,22 +64,33 @@
 </script>
 
 <main class="bg-[#127a2c] text-white rounded-md p-4">
-    
     <div class="grid grid-cols-3 gap-4 mb-4">
         <div>
-            <img src="/symbols.png" alt="">
+            <img src="/symbols.png" alt="" />
         </div>
-        <h1 class="text-5xl place-content-center text-center bg-[#0a601f] rounded-md shadow-2xl p-4">Blackjack Game</h1>
+        <h1
+            class="text-5xl place-content-center text-center bg-[#0a601f] rounded-md shadow-2xl p-4"
+        >
+            Blackjack Game
+        </h1>
         <div class="text-center flex justify-end gap-8 items-center">
-            <p class="m-4 text-center bg-[#0a601f] rounded-md shadow-2xl p-4">${playerBalance}</p>
-            <p class="m-4 text-center bg-[#0a601f] rounded-md shadow-2xl p-4">{currentPhase}</p>
+            <p class="m-4 text-center bg-[#0a601f] rounded-md shadow-2xl p-4">
+                ${playerBalance}
+            </p>
+            <p class="m-4 text-center bg-[#0a601f] rounded-md shadow-2xl p-4">
+                {currentPhase}
+            </p>
         </div>
     </div>
-    
-    <div class="bg-[#06561a] w-full rounded-md h-[50vh] p-4 shadow-2xl flex-col justify-start items-center gap-4">
 
+    <div
+        class="bg-[#06561a] w-full rounded-md h-[50vh] p-4 shadow-2xl flex-col justify-start items-center gap-4"
+    >
         {#if currentPhase === GamePhase.Betting && !isGameOver}
-            <div in:fade={{delay:1000}} class="flex justify-center items-center gap-4 w-full h-full">
+            <div
+                in:fade={{ delay: 1000 }}
+                class="flex justify-center items-center gap-4 w-full h-full"
+            >
                 <label class="bg-amber-700 p-2 rounded-md">
                     Bet:
                     <input
@@ -90,25 +101,35 @@
                         max={playerBalance}
                     />
                 </label>
-                <button class="rounded-full bg-blue-950 p-4" onclick={placeBet} disabled={playerBet > playerBalance}
-                    >Place Bet</button
+                <button
+                    class="rounded-full bg-blue-950 p-4"
+                    onclick={placeBet}
+                    disabled={playerBet > playerBalance}>Place Bet</button
                 >
             </div>
-    
         {/if}
 
         {#if currentPhase !== GamePhase.Betting}
-            <div in:fade={{delay:1000}} class="flex gap-4 justify-center items-center">
-                <h2 class="text-2xl border-white border-2 p-4 rounded-md m-4">Dealer's Hand ({currentPhase === GamePhase.Outcome
-                    ? dealerHandValue
-                    : "?"})</h2>
+            <div
+                in:fade={{ delay: 1000 }}
+                class="flex gap-4 justify-center items-center"
+            >
+                <h2 class="text-2xl border-white border-2 p-4 rounded-md m-4">
+                    Dealer's Hand ({currentPhase === GamePhase.Outcome
+                        ? dealerHandValue
+                        : "?"})
+                </h2>
             </div>
-            
-            <div in:fade={{delay:1000}} class="flex justify-center items-center gap-12 p-4">
+
+            <div
+                in:fade={{ delay: 1000 }}
+                class="flex justify-center items-center gap-12 p-4"
+            >
                 <div class="flex gap-2">
                     {#if currentPhase === GamePhase.Outcome}
                         {#each dealerHand as card}
-                            <img in:fade={{delay:1000}}
+                            <img
+                                in:fade={{ delay: 1000 }}
                                 src={card.image}
                                 alt={`${card.value} of ${card.suit}`}
                                 width="80"
@@ -116,7 +137,8 @@
                         {/each}
                     {:else if dealerHand.length > 0}
                         <!-- Show upcard and hide the hole card -->
-                        <img in:fade={{delay:1000}}
+                        <img
+                            in:fade={{ delay: 1000 }}
                             src={dealerHand[0].image}
                             alt={`${dealerHand[0].value} of ${dealerHand[0].suit}`}
                             width="80"
@@ -131,13 +153,28 @@
                     {/if}
                 </div>
             </div>
-            
+
             <!-- Player hands section -->
-            <div in:fade={{delay:1000}} class="flex flex-wrap justify-center gap-8">
+            <div
+                in:fade={{ delay: 1000 }}
+                class="flex flex-wrap justify-center gap-8"
+            >
                 {#each playerHands as hand, index}
-                    <div class="flex flex-col items-center" class:border-4={index === activeHandIndex && currentPhase === GamePhase.PlayerTurn} class:border-yellow-300={index === activeHandIndex && currentPhase === GamePhase.PlayerTurn} class:rounded-md={index === activeHandIndex && currentPhase === GamePhase.PlayerTurn} class:p-2={index === activeHandIndex && currentPhase === GamePhase.PlayerTurn}>
-                        <h3 class="text-xl mb-2">Hand {index + 1} ({game.calculateHandValue(hand)})</h3>
-                        
+                    <div
+                        class="flex flex-col items-center"
+                        class:border-4={index === activeHandIndex &&
+                            currentPhase === GamePhase.PlayerTurn}
+                        class:border-yellow-300={index === activeHandIndex &&
+                            currentPhase === GamePhase.PlayerTurn}
+                        class:rounded-md={index === activeHandIndex &&
+                            currentPhase === GamePhase.PlayerTurn}
+                        class:p-2={index === activeHandIndex &&
+                            currentPhase === GamePhase.PlayerTurn}
+                    >
+                        <h3 class="text-xl mb-2">
+                            Hand {index + 1} ({game.calculateHandValue(hand)})
+                        </h3>
+
                         <div class="flex gap-2 mb-2">
                             {#each hand as card}
                                 <img
@@ -147,7 +184,7 @@
                                 />
                             {/each}
                         </div>
-                        
+
                         {#if currentPhase === GamePhase.Outcome}
                             <div class="bg-amber-800 p-2 rounded-md">
                                 {gameOutcomes[index] || "Pending"}
@@ -158,34 +195,53 @@
             </div>
 
             {#if currentPhase === GamePhase.PlayerTurn}
-                <div in:fade={{delay:1000}} class="flex gap-4 justify-center items-center">
-                    <button class="rounded-full bg-blue-950 p-4" onclick={() => performAction(PlayerAction.Hit)}
-                        >Hit</button 
+                <div
+                    in:fade={{ delay: 1000 }}
+                    class="flex gap-4 justify-center items-center"
+                >
+                    <button
+                        class="rounded-full bg-blue-950 p-4"
+                        onclick={() => performAction(PlayerAction.Hit)}
+                        >Hit</button
                     >
-                    <button class="rounded-full bg-blue-950 p-4" onclick={() => performAction(PlayerAction.Stand)}
+                    <button
+                        class="rounded-full bg-blue-950 p-4"
+                        onclick={() => performAction(PlayerAction.Stand)}
                         >Stand</button
                     >
                     {#if canSplit}
-                        <button class="rounded-full bg-blue-950 p-4" onclick={() => performAction(PlayerAction.Split)}
+                        <button
+                            class="rounded-full bg-blue-950 p-4"
+                            onclick={() => performAction(PlayerAction.Split)}
                             >Split</button
                         >
                     {/if}
                 </div>
             {/if}
         {/if}
-        
+
         {#if currentPhase === GamePhase.Outcome && !isGameOver}
-            <div in:fade={{delay:2000}} class="flex gap-4 justify-center items-center">
-                <button class="bg-amber-700 p-2 rounded-md" onclick={newRound}>New Round</button>
+            <div
+                in:fade={{ delay: 2000 }}
+                class="flex gap-4 justify-center items-center"
+            >
+                <button class="bg-amber-700 p-2 rounded-md" onclick={newRound}
+                    >New Round</button
+                >
             </div>
         {/if}
 
         {#if isGameOver}
-        <div class="flex gap-4 justify-center items-center">
-            <h2 in:fade={{delay:1000}}>Game Over! You are out of money.</h2>
-            <button class="bg-amber-700 p-2 rounded-md" in:fade={{delay:1000}} onclick={restartGame}>Restart Game</button>
-        </div>
+            <div class="flex gap-4 justify-center items-center">
+                <h2 in:fade={{ delay: 1000 }}>
+                    Game Over! You are out of money.
+                </h2>
+                <button
+                    class="bg-amber-700 p-2 rounded-md"
+                    in:fade={{ delay: 1000 }}
+                    onclick={restartGame}>Restart Game</button
+                >
+            </div>
         {/if}
     </div>
-
 </main>

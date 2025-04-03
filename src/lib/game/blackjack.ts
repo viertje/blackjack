@@ -9,10 +9,10 @@ import {
 
 export class BlackjackGame {
     deck!: Deck;
-    playerHands: Card[][] = [[]];  // Array of player hands (for splitting)
-    activeHandIndex: number = 0;   // Index of the currently active hand
+    playerHands: Card[][] = [[]]; // Array of player hands (for splitting)
+    activeHandIndex: number = 0; // Index of the currently active hand
     dealerHand: Card[] = [];
-    playerBets: number[] = [0];    // Bet amount for each hand
+    playerBets: number[] = [0]; // Bet amount for each hand
     playerBalance = 1000;
     gameOver = false;
     reshuffleThreshold = 312 * 0.4; // About 125 cards remaining
@@ -67,7 +67,7 @@ export class BlackjackGame {
         this.activeHandIndex = 0;
         this.gameOutcomes = [null];
         this.splitHandsIndices = []; // Reset split hands tracking
-        
+
         this.playerBalance -= bet;
         this.currentPhase = GamePhase.InitialDeal;
 
@@ -79,7 +79,9 @@ export class BlackjackGame {
         this.playerHands[0] = initialDraw.cards.slice(0, 2);
         this.dealerHand = initialDraw.cards.slice(2, 4);
 
-        const playerHasBlackjack = this.isNaturalBlackjack(this.getActiveHand());
+        const playerHasBlackjack = this.isNaturalBlackjack(
+            this.getActiveHand()
+        );
         const dealerHasBlackjack = this.isNaturalBlackjack(this.dealerHand);
 
         if (playerHasBlackjack || dealerHasBlackjack) {
@@ -315,21 +317,23 @@ export class BlackjackGame {
      */
     canSplit(): boolean {
         const hand = this.getActiveHand();
-        
+
         // Can only split with exactly 2 cards of the same value
         if (hand.length !== 2) return false;
-        
+
         // Cannot re-split (if this hand is already a result of a split)
         if (this.splitHandsIndices.includes(this.activeHandIndex)) return false;
-        
+
         // Compare card values (face cards are all value 10)
         const value1 = this.getCardValue(hand[0]);
         const value2 = this.getCardValue(hand[1]);
-        
+
         // Must have enough balance to match the bet
-        return value1 === value2 && this.playerBalance >= this.getActiveHandBet();
+        return (
+            value1 === value2 && this.playerBalance >= this.getActiveHandBet()
+        );
     }
-    
+
     /**
      * Get numerical value of a card for comparison
      */
@@ -342,7 +346,7 @@ export class BlackjackGame {
             return parseInt(card.value);
         }
     }
-    
+
     /**
      * Split the active hand into two separate hands
      */
@@ -350,44 +354,44 @@ export class BlackjackGame {
         if (!this.canSplit()) {
             throw new Error("This hand cannot be split");
         }
-        
+
         const activeHand = this.getActiveHand();
         const bet = this.getActiveHandBet();
-        
+
         // Deduct the bet for the second hand
         this.playerBalance -= bet;
-        
+
         // Create two new hands, each with one card from the original hand
         const hand1 = [activeHand[0]];
         const hand2 = [activeHand[1]];
-        
+
         // Deal one additional card to each new hand
         await this.maybeReshuffle();
         const drawResult = await this.deck.draw(2);
-        
+
         if (drawResult.cards.length === 2) {
             hand1.push(drawResult.cards[0]);
             hand2.push(drawResult.cards[1]);
         }
-        
+
         // Replace the active hand with the first new hand
         this.playerHands[this.activeHandIndex] = hand1;
-        
+
         // Mark both hands as results of a split to prevent re-splitting
         this.splitHandsIndices.push(this.activeHandIndex);
         this.splitHandsIndices.push(this.playerHands.length); // Index of the second hand (after push)
-        
+
         // Add the second new hand and its bet
         this.playerHands.push(hand2);
         this.playerBets.push(bet);
-        
+
         // Add a placeholder for the second hand's outcome
         this.gameOutcomes.push(null);
-        
+
         // Stay on the first hand for now
         return this.playerHands;
     }
-    
+
     /**
      * Move to the next hand if available
      */
@@ -404,16 +408,17 @@ export class BlackjackGame {
      */
     async handleAction(action: PlayerAction) {
         const activeHand = this.getActiveHand();
-        
+
         switch (action) {
             case PlayerAction.Hit:
                 await this.hit(activeHand);
-                
+
                 // If current hand busts, check if we need to move to next hand or end player turn
                 if (this.isBust(activeHand)) {
                     // Mark this hand as bust in outcomes
-                    this.gameOutcomes[this.activeHandIndex] = GameOutcome.PlayerBust;
-                    
+                    this.gameOutcomes[this.activeHandIndex] =
+                        GameOutcome.PlayerBust;
+
                     // If there are more hands to play, move to next hand
                     if (this.moveToNextHand()) {
                         // Continue player turn with next hand
@@ -437,7 +442,7 @@ export class BlackjackGame {
                     this.checkGameOver();
                 }
                 break;
-                
+
             case PlayerAction.Split:
                 if (!this.canSplit()) {
                     throw new Error("Cannot split this hand");
