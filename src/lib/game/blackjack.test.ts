@@ -1,3 +1,4 @@
+import test from "node:test";
 import { strict as assert } from "assert";
 import { BlackjackGame } from "./blackjack";
 import type { Card, Deck } from "../api/deckAPI";
@@ -65,10 +66,10 @@ class FakeDeck implements Deck {
 }
 
 /* ------------------------------
-   Tests for utility functions
+   Utility Function Tests
 ------------------------------ */
 
-function testIsNaturalBlackjackFunction() {
+test("testIsNaturalBlackjackFunction", () => {
     const game = new BlackjackGame();
     const handBlackjack = [
         createCard("ACE", "Hearts"),
@@ -89,10 +90,9 @@ function testIsNaturalBlackjackFunction() {
         false,
         "Hand should not be a natural blackjack"
     );
-    console.log("testIsNaturalBlackjackFunction passed.");
-}
+});
 
-function testIsBustFunction() {
+test("testIsBustFunction", () => {
     const game = new BlackjackGame();
     const handBust = [
         createCard("10", "Hearts"),
@@ -102,10 +102,9 @@ function testIsBustFunction() {
     const handNotBust = [createCard("10", "Hearts"), createCard("7", "Clubs")];
     assert.equal(game.isBust(handBust), true, "Hand should be bust");
     assert.equal(game.isBust(handNotBust), false, "Hand should not be bust");
-    console.log("testIsBustFunction passed.");
-}
+});
 
-function testCalculateHandValue() {
+test("testCalculateHandValue", () => {
     const game = new BlackjackGame();
     let value = game.calculateHandValue([
         createCard("ACE", "Hearts"),
@@ -130,10 +129,9 @@ function testCalculateHandValue() {
         createCard("3", "Spades"),
     ]);
     assert.equal(value, 14, "Ace + Ace + 9 + 3 should equal 14");
-    console.log("testCalculateHandValue passed.");
-}
+});
 
-function testHasSoft17() {
+test("testHasSoft17", () => {
     const game = new BlackjackGame();
     const soft17Hand = [createCard("ACE", "Hearts"), createCard("6", "Clubs")];
     const notSoft17Hand = [
@@ -150,15 +148,13 @@ function testHasSoft17() {
         false,
         "Hand without Ace should not be soft 17"
     );
-    console.log("testHasSoft17 passed.");
-}
+});
 
 /* ------------------------------
-   Tests for game actions and outcomes
+   Game Actions & Outcome Tests
 ------------------------------ */
 
-async function testDetermineWinner() {
-    console.log("Running testDetermineWinner...");
+test("testDetermineWinner", async () => {
     const game = new BlackjackGame();
 
     let win = game.determineWinner(
@@ -178,11 +174,9 @@ async function testDetermineWinner() {
         [createCard("10", "Diamonds"), createCard("7", "Spades")]
     );
     assert.equal(win, WinState.Push, "Should be a push (equal totals)");
-    console.log("testDetermineWinner passed.");
-}
+});
 
-async function testStartGame() {
-    console.log("Running testStartGame...");
+test("testStartGame", async () => {
     const cards = [
         createCard("10", "Hearts"), // Player card1
         createCard("7", "Clubs"), // Player card2
@@ -218,11 +212,9 @@ async function testStartGame() {
             "Phase should be PlayerTurn if no natural blackjack"
         );
     }
-    console.log("testStartGame passed.");
-}
+});
 
-async function testHit() {
-    console.log("Running testHit...");
+test("testHit", async () => {
     const cards = [
         createCard("10", "Hearts"),
         createCard("7", "Clubs"),
@@ -240,11 +232,9 @@ async function testHit() {
         initialLength + 1,
         "Hit should add one card to active hand"
     );
-    console.log("testHit passed.");
-}
+});
 
-async function testHitDealer() {
-    console.log("Running testHitDealer...");
+test("testHitDealer", async () => {
     const cards = [
         createCard("10", "Hearts"),
         createCard("7", "Clubs"),
@@ -262,11 +252,9 @@ async function testHitDealer() {
         initialDealerLength + 1,
         "Dealer hit should add one card"
     );
-    console.log("testHitDealer passed.");
-}
+});
 
-async function testDealerPlay() {
-    console.log("Running testDealerPlay...");
+test("testDealerPlay", async () => {
     // Dealer should hit until total >= 17.
     const cards = [
         createCard("10", "Hearts"), // Player card1
@@ -288,11 +276,9 @@ async function testDealerPlay() {
         GamePhase.Outcome,
         "Phase should be Outcome after dealerPlay"
     );
-    console.log("testDealerPlay passed.");
-}
+});
 
-function testCheckHandOutcome_PlayerBust() {
-    console.log("Running testCheckHandOutcome_PlayerBust...");
+test("testCheckHandOutcome_PlayerBust", () => {
     const game = new BlackjackGame();
     game.playerHands = [
         [
@@ -309,13 +295,10 @@ function testCheckHandOutcome_PlayerBust() {
         GameOutcome.PlayerBust,
         "Outcome should be PlayerBust when player busts"
     );
-    console.log("testCheckHandOutcome_PlayerBust passed.");
-}
+});
 
-function testCheckHandOutcome_DealerBust() {
-    console.log("Running testCheckHandOutcome_DealerBust...");
+test("testCheckHandOutcome_DealerBust", () => {
     const game = new BlackjackGame();
-
     // Simulate starting conditions: a bet of 100 is placed so the balance decreases from 1000 to 900.
     game.playerBalance = 900;
     game.playerBets = [100];
@@ -325,9 +308,7 @@ function testCheckHandOutcome_DealerBust() {
         createCard("7", "Spades"),
         createCard("5", "Clubs"),
     ]; // Dealer total = 22 (bust)
-
     const outcome = game.checkHandOutcome(0);
-
     assert.equal(
         outcome,
         GameOutcome.DealerBust,
@@ -338,20 +319,15 @@ function testCheckHandOutcome_DealerBust() {
         1100,
         "Player balance should update to 1100 (900 + 200 payout) on dealer bust"
     );
-    console.log("testCheckHandOutcome_DealerBust passed.");
-}
+});
 
-function testCheckHandOutcome_PlayerWins() {
-    console.log("Running testCheckHandOutcome_PlayerWins...");
+test("testCheckHandOutcome_PlayerWins", () => {
     const game = new BlackjackGame();
-
     game.playerBalance = 900; // simulate bet already deducted
     game.playerBets = [100];
     game.playerHands = [[createCard("10", "Hearts"), createCard("8", "Clubs")]]; // 18
     game.dealerHand = [createCard("10", "Diamonds"), createCard("7", "Spades")]; // 17
-
     const outcome = game.checkHandOutcome(0);
-
     assert.equal(
         outcome,
         GameOutcome.PlayerWins,
@@ -362,20 +338,15 @@ function testCheckHandOutcome_PlayerWins() {
         1100,
         "Player balance should update to 1100 (900 + 200) on player win"
     );
-    console.log("testCheckHandOutcome_PlayerWins passed.");
-}
+});
 
-function testCheckHandOutcome_DealerWins() {
-    console.log("Running testCheckHandOutcome_DealerWins...");
+test("testCheckHandOutcome_DealerWins", () => {
     const game = new BlackjackGame();
-
     game.playerBalance = 900; // simulate bet already deducted
     game.playerBets = [100];
     game.playerHands = [[createCard("10", "Hearts"), createCard("7", "Clubs")]]; // 17
     game.dealerHand = [createCard("10", "Diamonds"), createCard("8", "Spades")]; // 18
-
     const outcome = game.checkHandOutcome(0);
-
     assert.equal(
         outcome,
         GameOutcome.DealerWins,
@@ -386,31 +357,24 @@ function testCheckHandOutcome_DealerWins() {
         900,
         "Player balance should stay at 900 (bet lost) on dealer win"
     );
-    console.log("testCheckHandOutcome_DealerWins passed.");
-}
+});
 
-function testCheckHandOutcome_Push() {
-    console.log("Running testCheckHandOutcome_Push...");
+test("testCheckHandOutcome_Push", () => {
     const game = new BlackjackGame();
-
     game.playerBalance = 900; // simulate bet already deducted
     game.playerBets = [100];
     game.playerHands = [[createCard("10", "Hearts"), createCard("7", "Clubs")]]; // 17
     game.dealerHand = [createCard("10", "Diamonds"), createCard("7", "Spades")]; // 17
-
     const outcome = game.checkHandOutcome(0);
-
     assert.equal(outcome, GameOutcome.Push, "Outcome should be Push on tie");
     assert.equal(
         game.getPlayerBalance(),
         1000,
         "Player balance should update to 1000 (900 + 100) on push"
     );
-    console.log("testCheckHandOutcome_Push passed.");
-}
+});
 
-function testCheckAllHandsOutcome() {
-    console.log("Running testCheckAllHandsOutcome...");
+test("testCheckAllHandsOutcome", () => {
     const game = new BlackjackGame();
     game.playerHands = [
         [createCard("10", "Hearts"), createCard("7", "Clubs")],
@@ -423,18 +387,16 @@ function testCheckAllHandsOutcome() {
     ]; // Dealer busts
     game.playerBets = [100, 100];
     const outcomes = game.checkAllHandsOutcome();
-    outcomes.forEach((outcome) =>
+    outcomes.forEach((outcome) => {
         assert.equal(
             outcome,
             GameOutcome.DealerBust,
             "Each hand should be DealerBust if dealer busts"
-        )
-    );
-    console.log("testCheckAllHandsOutcome passed.");
-}
+        );
+    });
+});
 
-function testCheckGameOver() {
-    console.log("Running testCheckGameOver...");
+test("testCheckGameOver", () => {
     const game = new BlackjackGame();
     game.playerBalance = 0;
     assert.equal(
@@ -442,11 +404,9 @@ function testCheckGameOver() {
         true,
         "Game should be over when balance is 0"
     );
-    console.log("testCheckGameOver passed.");
-}
+});
 
-function testRestartGame() {
-    console.log("Running testRestartGame...");
+test("testRestartGame", () => {
     const game = new BlackjackGame();
     game.playerBalance = 500;
     game.gameOver = true;
@@ -471,11 +431,9 @@ function testRestartGame() {
         0,
         "Bet should reset to 0 after restart"
     );
-    console.log("testRestartGame passed.");
-}
+});
 
-async function testGetters() {
-    console.log("Running testGetters...");
+test("testGetters", async () => {
     const cards = [
         createCard("10", "Hearts"),
         createCard("7", "Clubs"),
@@ -502,7 +460,6 @@ async function testGetters() {
         2,
         "Dealer hand should have 2 cards"
     );
-    // After startGame, balance should be 1000 - 100 = 900 (if no blackjack)
     assert.equal(
         game.getPlayerBalance(),
         900,
@@ -529,29 +486,23 @@ async function testGetters() {
         [null],
         "All outcomes should be [null]"
     );
-    console.log("testGetters passed.");
-}
+});
 
-function testCanSplit() {
-    console.log("Running testCanSplit...");
+test("testCanSplit", () => {
     const game = new BlackjackGame();
-    // Set active hand to two cards with same value.
     game.playerHands = [[createCard("8", "Hearts"), createCard("8", "Clubs")]];
     game.playerBets = [100];
     game.playerBalance = 900; // enough to match bet
     assert.equal(game.canSplit(), true, "Hand should be splittable");
-    // Change to two different cards.
     game.playerHands = [[createCard("8", "Hearts"), createCard("9", "Clubs")]];
     assert.equal(
         game.canSplit(),
         false,
         "Hand should not be splittable with different values"
     );
-    console.log("testCanSplit passed.");
-}
+});
 
-function testMoveToNextHand() {
-    console.log("Running testMoveToNextHand...");
+test("testMoveToNextHand", () => {
     const game = new BlackjackGame();
     game.playerHands = [
         [createCard("10", "Hearts"), createCard("7", "Clubs")],
@@ -565,12 +516,9 @@ function testMoveToNextHand() {
         false,
         "Should not move past the last hand"
     );
-    console.log("testMoveToNextHand passed.");
-}
+});
 
-async function testHandleAction() {
-    console.log("Running testHandleAction...");
-
+test("testHandleAction", async () => {
     // Test Hit action
     {
         const cards = [
@@ -591,7 +539,6 @@ async function testHandleAction() {
             "Hit should add one card to active hand"
         );
     }
-
     // Test Stand action (should trigger dealerPlay)
     {
         const cards = [
@@ -611,13 +558,9 @@ async function testHandleAction() {
             "After Stand, phase should be Outcome"
         );
     }
+});
 
-    // Test Split action is covered in testSplitHand (not repeated here)
-    console.log("testHandleAction passed.");
-}
-
-async function testNewRound() {
-    console.log("Running testNewRound...");
+test("testNewRound", async () => {
     const game = new BlackjackGame();
     // Simulate an ongoing game state.
     game.playerHands = [
@@ -648,42 +591,4 @@ async function testNewRound() {
         0,
         "After newRound, dealer hand should be empty"
     );
-    console.log("testNewRound passed.");
-}
-
-/* ------------------------------
-   Run all tests sequentially
------------------------------- */
-
-async function runTests() {
-    try {
-        testIsNaturalBlackjackFunction();
-        testIsBustFunction();
-        testCalculateHandValue();
-        testHasSoft17();
-        await testDetermineWinner();
-        await testStartGame();
-        await testHit();
-        await testHitDealer();
-        await testDealerPlay();
-        testCheckHandOutcome_PlayerBust();
-        testCheckHandOutcome_DealerBust();
-        testCheckHandOutcome_PlayerWins();
-        testCheckHandOutcome_DealerWins();
-        testCheckHandOutcome_Push();
-        testCheckAllHandsOutcome();
-        testCheckGameOver();
-        testRestartGame();
-        await testGetters();
-        testCanSplit();
-        testMoveToNextHand();
-        await testHandleAction();
-        await testNewRound();
-        console.log("✅ All tests passed.");
-    } catch (err) {
-        console.error("❌ Test failed:", err);
-        process.exit(1);
-    }
-}
-
-runTests();
+});
