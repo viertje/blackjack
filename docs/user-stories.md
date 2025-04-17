@@ -131,3 +131,83 @@ Als Spieler möchte ich, dass Asse entweder als 11 oder 1 zählen – je nachdem
 - **Given** ich habe ein oder mehrere Asse in meiner Hand.
 - **When** das Spiel meinen Handwert berechnet.
 - **Then** zählt jedes Ass zunächst als 11, aber wenn der Gesamtwert 21 übersteigt, wird der Wert von Assen nacheinander auf 1 reduziert, bis der Handwert 21 oder weniger beträgt.
+
+---
+
+## Website – User Stories
+
+### 1. Homepage anzeigen
+
+Als Besucher möchte ich eine einladende Homepage sehen, damit ich einen Überblick über das Casino bekomme.
+
+- **Acceptance Test:**
+  - **Given** ich navigiere zur Root-URL ("/").
+  - **When** die Seite lädt.
+  - **Then** sehe ich eine Willkommensnachricht für "OliOli Casino" und Schaltflächen wie "Play Now".
+
+### 2. Einheitlicher Header und Navigation
+
+Als Besucher möchte ich auf jeder Seite einen klaren Header mit Casino-Namen und Navigationslinks sehen, damit ich mich leicht zurechtfinde.
+
+- **Acceptance Test:**
+  - **Given** ich navigiere zu einer beliebigen Seite der Website.
+  - **When** die Seite lädt.
+  - **Then** sehe ich einen Header mit dem Titel "OliOli Casino" sowie Links zu "Blackjack", "About Us" und "Contact Us".
+
+### 4. Einheitlicher Footer
+
+Als Besucher möchte ich auf jeder Seite einen Footer mit Copyright-Informationen sehen, damit ich weiß, wem die Seite gehört.
+
+- **Acceptance Test:**
+  - **Given** ich navigiere zu einer beliebigen Seite der Website.
+  - **When** die Seite lädt.
+  - **Then** sehe ich im Footer z. B. den Text: "© 2025 Casino. All rights reserved."
+
+### 3. Zugriff auf Blackjack-Spiel
+
+Als Besucher möchte ich über die Hauptnavigation einfach zum Blackjack-Spiel gelangen, damit ich schnell loslegen kann.
+
+- **Acceptance Test:**
+  - **Given** ich bin auf einer beliebigen Seite der Website.
+  - **When** ich auf den "Blackjack"-Link in der Navigation klicke.
+  - **Then** werde ich zur Seite `/blackjack` weitergeleitet.
+
+### 5. Navigate to Game from Homepage
+
+As a Visitor, I want to click the "Play Now" button on the homepage, so that I can quickly jump into the Blackjack game.
+
+- **Acceptance Test:**
+  - **Given** I am on the homepage ["/"].
+  - **When** I click the "Play Now" button.
+  - **Then** I am navigated to the Blackjack game page (`/blackjack`).
+
+### 6. Visit About Us Page
+
+As a Visitor, I want to navigate to the "About Us" page, so that I can learn more about the OliOli Casino or the project.
+
+- **Acceptance Test:**
+  - **Given** I am on any page with the main navigation header.
+  - **When** I click the "About Us" link in the header.
+  - **Then** I am navigated to the `/about` page and can view its content (e.g., information about the casino/project purpose).
+
+### 8. Responsive Design (General)
+
+As a User (on any device), I want the website layout to adapt to my screen size, so that I have a good viewing and interaction experience on desktop, tablet, or mobile.
+
+- **Acceptance Test (Example for Header):**
+  - **Given** I am viewing the website on a small screen (e.g., mobile width).
+  - **When** the page loads.
+  - **Then** the header navigation links might collapse into a menu icon (hamburger menu) to save space, which can be clicked to reveal the links.
+- **Acceptance Test (Example for Game):**
+  - **Given** I am viewing the Blackjack game page on a small screen.
+  - **When** the page loads.
+  - **Then** the game elements (cards, buttons, text) are rearranged or resized appropriately to fit the screen without overlapping or requiring excessive scrolling.
+
+### 9. Homepage Information Link
+
+As a Visitor, I want to click the "Learn More" button on the homepage, so that I can find out more detailed information, perhaps leading to the About Us page.
+
+- **Acceptance Test:**
+  - **Given** I am on the homepage ["/"].
+  - **When** I click the "Learn More" button.
+  - **Then** I am navigated to a relevant informational page (e.g., `/about`).
